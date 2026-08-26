@@ -1,0 +1,498 @@
+<!DOCTYPE html>  
+<html lang="es">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>Super Mario: Programa Analítico 2D</title>  
+    <style>  
+        * { box-sizing: border-box; font-family: 'Courier New', monospace; }  
+        body { margin: 0; padding: 20px; background: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; color: #fff; }  
+        #game-wrapper { position: relative; width: 900px; height: 450px; border: 4px solid #fff; background: #5c94fc; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.7); border-radius: 8px; }  
+        #canvas { background: #5c94fc; width: 900px; height: 450px; display: block; }  
+          
+        #hud { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #fff; text-shadow: 2px 2px #000; z-index: 5; }  
+          
+        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; text-align: center; padding: 20px; }  
+        .overlay-screen h1 { font-size: 28px; color: #ffcc00; margin-bottom: 15px; text-shadow: 2px 2px #000; }  
+        .overlay-screen p { font-size: 14px; margin-bottom: 20px; color: #eee; max-width: 600px; line-height: 1.4; }  
+        .main-btn { padding: 12px 28px; font-size: 18px; font-weight: bold; background: #ffcc00; color: #000; border: none; border-radius: 6px; cursor: pointer; box-shadow: 0 4px #b38f00; font-family: inherit; }  
+        .main-btn:hover { background: #ffa500; transform: translateY(-2px); }  
+  
+        #quiz-modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); justify-content: center; align-items: center; z-index: 30; padding: 20px; }  
+        .modal-content { background: #e65c00; border: 4px solid #fff; border-radius: 10px; padding: 20px; max-width: 650px; width: 100%; color: #fff; text-align: left; }  
+        .modal-content h3 { margin-top: 0; color: #ffcc00; text-shadow: 1px 1px #000; font-size: 15px; line-height: 1.3; white-space: pre-line; }  
+        .option-btn { display: block; width: 100%; margin: 8px 0; padding: 10px; background: #ffcc00; color: #000; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; text-align: left; font-size: 12px; font-family: inherit; line-height: 1.2; }  
+        .option-btn:hover { background: #ffa500; }  
+  
+        #touch-controls { margin-top: 15px; display: flex; gap: 15px; }  
+        .touch-btn { width: 60px; height: 45px; background: #333; color: white; border: 2px solid #fff; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; user-select: none; }  
+        .touch-btn:active { background: #555; }  
+        .controls-hint { margin-top: 10px; color: #aaa; font-size: 13px; }  
+    </style>  
+</head>  
+<body>  
+  
+<div id="game-wrapper">  
+    <div id="hud">  
+        <div>PUNTOS: <span id="score">0</span>/10</div>  
+        <div>VIDAS: <span id="lives">❤️❤️❤️</span></div>  
+    </div>  
+  
+    <canvas id="canvas" width="900" height="450"></canvas>  
+  
+    <div id="start-screen" class="overlay-screen">  
+        <h1>SUPER MARIO: PROGRAMA ANALÍTICO</h1>  
+        <p>Mueve a Mario con las flechas o teclas A/D/Espacio.<br>  
+        Esquiva los <b>orificios</b>, salta las <b>tuberías verdes</b> y súbete a las <b>plataformas de ladrillo</b> para alcanzar los bloques <b>?</b>.<br><br>  
+        <b>Objetivo:</b> Responde las 10 preguntas para ganar. ¡Cuidado con caer o responder mal!</p>  
+        <button class="main-btn" onclick="startGame()">¡COMENZAR JUEGO!</button>  
+    </div>  
+  
+    <div id="quiz-modal">  
+        <div class="modal-content">  
+            <h3 id="q-title">Pregunta</h3>  
+            <div id="q-options"></div>  
+        </div>  
+    </div>  
+  
+    <div id="game-over-screen" class="overlay-screen" style="display: none;">  
+        <h1 id="end-title">¡GAME OVER!</h1>  
+        <p id="end-msg">Te quedaste sin vidas.</p>  
+        <button class="main-btn" onclick="resetGame()">JUGAR DE NUEVO</button>  
+    </div>  
+</div>  
+  
+<div id="touch-controls">  
+    <button class="touch-btn" id="btn-left">◄</button>  
+    <button class="touch-btn" id="btn-right">►</button>  
+    <button class="touch-btn" id="btn-jump" style="width: 100px; background: #e65c00;">SALTAR</button>  
+</div>  
+  
+<div class="controls-hint">  
+    🎮 <b>Teclado:</b> Moverse: ◄ ► (o A/D) | Saltar: ▲ / W / Espacio  
+</div>  
+  
+<script>  
+const canvas = document.getElementById('canvas');  
+const ctx = canvas.getContext('2d');  
+  
+// Audio Synthesizer (Retro 8-bit sound engine)  
+let audioCtx = null;  
+function initAudio() {  
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();  
+}  
+  
+function playNote(freq, type, duration) {  
+    if (!audioCtx) return;  
+    try {  
+        const osc = audioCtx.createOscillator();  
+        const gain = audioCtx.createGain();  
+        osc.type = type;  
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);  
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);  
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);  
+        osc.connect(gain);  
+        gain.connect(audioCtx.destination);  
+        osc.start();  
+        osc.stop(audioCtx.currentTime + duration);  
+    } catch(e){}  
+}  
+  
+function soundJump() {  
+    if (!audioCtx) return;  
+    playNote(150, 'square', 0.1);  
+    setTimeout(() => playNote(300, 'square', 0.15), 50);  
+}  
+  
+function soundBlock() {  
+    playNote(400, 'triangle', 0.1);  
+    setTimeout(() => playNote(800, 'triangle', 0.1), 80);  
+}  
+  
+function soundSuccess() {  
+    playNote(523, 'square', 0.1);  
+    setTimeout(() => playNote(659, 'square', 0.1), 100);  
+    setTimeout(() => playNote(783, 'square', 0.2), 200);  
+}  
+  
+function soundError() {  
+    playNote(200, 'sawtooth', 0.15);  
+    setTimeout(() => playNote(130, 'sawtooth', 0.25), 150);  
+}  
+  
+// BGM Loop  
+let musicTimer = null;  
+function startBGM() {  
+    const notes = [261, 261, 0, 261, 0, 207, 261, 0, 329, 0, 0, 0, 164, 0, 0, 0];  
+    let step = 0;  
+    if (musicTimer) clearInterval(musicTimer);  
+    musicTimer = setInterval(() => {  
+        if (!isPaused && gameStarted && audioCtx) {  
+            if (notes[step] > 0) playNote(notes[step], 'square', 0.08);  
+            step = (step + 1) % notes.length;  
+        }  
+    }, 150);  
+}  
+  
+const questions = [  
+    { q: "Pregunta 1: Sentido del codiseño\n¿Cuál es el sentido fundamental del codiseño en los programas de estudio de la Nueva Escuela Mexicana?", opts: ["a) Seguir de manera idéntica y estricta el currículo nacional sin hacer cambios.", "b) Ejercer la autonomía profesional de las y los docentes para decidir qué es pertinente enseñar según las condiciones de su contexto.", "c) Diseñar pruebas estandarizadas nacionales para clasificar a los estudiantes de cada grado."], correct: 1 },  
+    { q: "Pregunta 2: Definición del Programa Analítico\n¿Cómo se define el Programa Analítico dentro del marco curricular vigente?", opts: ["a) Como un formato administrativo rígido que los docentes llenan individualmente cada mes.", "b) Como un listado de contenidos homogéneos y obligatorios para todas las escuelas del país.", "c) Como una estrategia de contextualización que los docentes realizan colectivamente a partir de los programas sintéticos."], correct: 2 },  
+    { q: "Pregunta 3: Primer plano (Lectura de la realidad)\n¿Qué actividad define principalmente al Primer plano: Lectura de la realidad?", opts: ["a) El llenado de estadísticas socioeconómicas solicitadas por la SEP.", "b) Un ejercicio de problematización sobre las condiciones educativas de la escuela, los retos docentes y su contexto social.", "c) La aplicación obligatoria de un examen de opción múltiple al inicio del año escolar."], correct: 1 },  
+    { q: "Pregunta 4: El peligro de las 'certezas' en el diagnóstico\nAl realizar la lectura de la realidad, ¿qué efecto negativo tienen las 'certezas' o ideas preconcebidas del colectivo?", opts: ["a) Permiten redactar con mayor rapidez el diagnóstico de la escuela.", "b) Ocultan a los sujetos concretos e impiden comprender la realidad en movimiento.", "c) Facilitan que los padres de familia participen de forma más activa."], correct: 1 },  
+    { q: "Pregunta 5: Segundo plano (Contextualización)\n¿En qué consiste el proceso de Contextualización (Segundo plano)?", opts: ["a) En diseñar secuencias de actividades vinculadas a situaciones o problemáticas locales partiendo de los programas sintéticos.", "b) En agregar temas globales que no guardan ninguna relación con la comunidad de los alumnos.", "c) En eliminar la totalidad de los contenidos nacionales del programa sintético."], correct: 0 },  
+    { q: "Pregunta 6: El plano de Codiseño\n¿A qué se refiere el plano de Codiseño y territorialización?", opts: ["a) A la adquisición y uso obligatorio de libros de texto de editoriales privadas.", "b) A la incorporación de contenidos locales específicos que no están contemplados en los programas sintéticos.", "c) A la transcripción textual y exacta de los proyectos de los Libros de Texto Gratuitos."], correct: 1 },  
+    { q: "Pregunta 7: Enfoque del Programa de Mejora Continua\n¿Qué tipo de problemáticas prioriza y busca resolver el Programa de Mejora Continua?", opts: ["a) Únicamente el desarrollo de los Procesos de Desarrollo de Aprendizaje (PDA) de cada clase.", "b) Las condiciones del funcionamiento del plantel y aquellas situaciones que afectan el aprendizaje y el desarrollo integral de los alumnos.", "c) Exclusivamente problemas de servicios públicos municipales ubicados fuera de las atribuciones de la escuela."], correct: 1 },  
+    { q: "Pregunta 8: Ámbito de acción del Programa Analítico\nA diferencia de los programas de gestión, ¿en qué campo se enfoca el Programa Analítico?", opts: ["a) En el manejo financiero y los recursos de mantenimiento de las instalaciones físicas.", "b) En la organización pedagógico-curricular para contextualizar y secuenciar los Contenidos y PDA de la fase.", "c) En la carga administrativa y el control de asistencia del personal de apoyo."], correct: 1 },  
+    { q: "Pregunta 9: Carácter sistemático de la Mejora Continua\n¿Por qué se establece que el Proceso de Mejora Continua de las escuelas es sistemático?", opts: ["a) Porque impone un orden lineal e inflexible que impide regresar a fases anteriores.", "b) Porque sigue fases comunes para ordenar los esfuerzos, pero la reflexión permite volver atrás y reconfigurar el rumbo.", "c) Porque está basado en una plataforma computacional de evaluación externa y estandarizada."], correct: 1 },  
+    { q: "Pregunta 10: Origen de la confusión entre programas\n¿A qué se atribuye la dificultad de los colectivos para decidir qué problemáticas van al Programa Analítico y cuáles al de Mejora Continua?", opts: ["a) A la falta de insumos didácticos y de tiempo para trabajar en el CTE.", "b) A la interpretación equivocada de que el Programa Analítico sustituye al Programa de Mejora Continua.", "c) A que ambos programas tienen exactamente las mismas funciones administrativas."], correct: 1 }  
+];  
+  
+let score = 0;  
+let lives = 3;  
+let activeQuestionBlock = null;  
+let isPaused = true;  
+let gameStarted = false;  
+  
+const mario = {  
+    x: 20, y: 300, width: 22, height: 30,  
+    vx: 0, vy: 0, speed: 4.5, jumpPower: -12, gravity: 0.55, grounded: false  
+};  
+  
+const groundY = 400;  
+  
+// Secciones del piso  
+const groundSegments = [  
+    { x1: 0, x2: 220 },  
+    { x1: 290, x2: 580 },  
+    { x1: 650, x2: 900 }  
+];  
+  
+// Tuberías verdes  
+const pipes = [  
+    { x: 170, y: 330, w: 40, h: 70 },  
+    { x: 520, y: 340, w: 40, h: 60 }  
+];  
+  
+// Bloques Ladrillo (Cafés)  
+const brickBlocks = [  
+    { x: 80,  y: 280, w: 30, h: 30 },  
+    { x: 310, y: 290, w: 60, h: 30 },  
+    { x: 440, y: 260, w: 30, h: 30 },  
+    { x: 670, y: 280, w: 60, h: 30 },  
+    { x: 790, y: 250, w: 30, h: 30 }  
+];  
+  
+// Bloques ? (Amarillos) - El último cuadro (qIndex: 9) se bajó a y: 270 para fácil acceso  
+const questionBlocks = [  
+    { x: 80,  y: 160, w: 30, h: 30, qIndex: 0, hit: false },  
+    { x: 130, y: 220, w: 30, h: 30, qIndex: 1, hit: false },  
+    { x: 310, y: 170, w: 30, h: 30, qIndex: 2, hit: false },  
+    { x: 340, y: 170, w: 30, h: 30, qIndex: 3, hit: false },  
+    { x: 440, y: 140, w: 30, h: 30, qIndex: 4, hit: false },  
+    { x: 490, y: 220, w: 30, h: 30, qIndex: 5, hit: false },  
+    { x: 670, y: 160, w: 30, h: 30, qIndex: 6, hit: false },  
+    { x: 700, y: 160, w: 30, h: 30, qIndex: 7, hit: false },  
+    { x: 790, y: 130, w: 30, h: 30, qIndex: 8, hit: false },  
+    { x: 840, y: 270, w: 30, h: 30, qIndex: 9, hit: false } // Cuadro final más abajo  
+];  
+  
+const keys = {};  
+  
+window.addEventListener('keydown', e => keys[e.code] = true);  
+window.addEventListener('keyup', e => keys[e.code] = false);  
+  
+function setupTouchEvents(btnId, code) {  
+    const btn = document.getElementById(btnId);  
+    btn.addEventListener('mousedown', () => keys[code] = true);  
+    btn.addEventListener('mouseup', () => keys[code] = false);  
+    btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[code] = true; });  
+    btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[code] = false; });  
+}  
+setupTouchEvents('btn-left', 'ArrowLeft');  
+setupTouchEvents('btn-right', 'ArrowRight');  
+setupTouchEvents('btn-jump', 'Space');  
+  
+function startGame() {  
+    initAudio();  
+    document.getElementById('start-screen').style.display = 'none';  
+    isPaused = false;  
+    gameStarted = true;  
+    startBGM();  
+}  
+  
+function update() {  
+    if (isPaused || !gameStarted) return;  
+  
+    if (keys['ArrowRight'] || keys['KeyD']) mario.vx = mario.speed;  
+    else if (keys['ArrowLeft'] || keys['KeyA']) mario.vx = -mario.speed;  
+    else mario.vx = 0;  
+  
+    if ((keys['ArrowUp'] || keys['KeyW'] || keys['Space']) && mario.grounded) {  
+        mario.vy = mario.jumpPower;  
+        mario.grounded = false;  
+        soundJump();  
+    }  
+  
+    mario.vy += mario.gravity;  
+    mario.x += mario.vx;  
+    mario.y += mario.vy;  
+  
+    if (mario.x < 0) mario.x = 0;  
+    if (mario.x + mario.width > canvas.width) mario.x = canvas.width - mario.width;  
+  
+    mario.grounded = false;  
+  
+    // Colisión Piso  
+    groundSegments.forEach(seg => {  
+        if (mario.x + mario.width > seg.x1 && mario.x < seg.x2) {  
+            if (mario.y + mario.height >= groundY && mario.y + mario.height - mario.vy <= groundY + 12) {  
+                mario.y = groundY - mario.height;  
+                mario.vy = 0;  
+                mario.grounded = true;  
+            }  
+        }  
+    });  
+  
+    // Caer en orificio  
+    if (mario.y > canvas.height + 50) {  
+        soundError();  
+        lives--;  
+        updateHUD();  
+        if (lives <= 0) {  
+            endGame(false);  
+        } else {  
+            mario.x = 20;  
+            mario.y = 300;  
+            mario.vx = 0;  
+            mario.vy = 0;  
+        }  
+    }  
+  
+    // Colisión Tuberías  
+    pipes.forEach(p => {  
+        checkSolidCollision(p);  
+    });  
+  
+    // Colisión Ladrillos  
+    brickBlocks.forEach(b => {  
+        checkSolidCollision(b);  
+    });  
+  
+    // Colisión Bloques ?  
+    questionBlocks.forEach(b => {  
+        if (mario.x < b.x + b.w &&  
+            mario.x + mario.width > b.x &&  
+            mario.y < b.y + b.h &&  
+            mario.y + mario.height > b.y) {  
+              
+            if (mario.vy < 0 && (mario.y - mario.vy) >= b.y + b.h - 8) {  
+                mario.vy = 3;  
+                if (!b.hit) {  
+                    soundBlock();  
+                    openQuestion(b);  
+                }  
+            } else if (mario.vy > 0 && (mario.y + mario.height - mario.vy) <= b.y + 8) {  
+                mario.y = b.y - mario.height;  
+                mario.vy = 0;  
+                mario.grounded = true;  
+            }  
+        }  
+    });  
+}  
+  
+function checkSolidCollision(box) {  
+    if (mario.x < box.x + box.w &&  
+        mario.x + mario.width > box.x &&  
+        mario.y < box.y + box.h &&  
+        mario.y + mario.height > box.y) {  
+          
+        if (mario.vy > 0 && (mario.y + mario.height - mario.vy) <= box.y + 10) {  
+            mario.y = box.y - mario.height;  
+            mario.vy = 0;  
+            mario.grounded = true;  
+        }  
+        else if (mario.vy < 0 && (mario.y - mario.vy) >= box.y + box.h - 10) {  
+            mario.y = box.y + box.h;  
+            mario.vy = 2;  
+        }  
+        else if (mario.vx > 0) {  
+            mario.x = box.x - mario.width;  
+        } else if (mario.vx < 0) {  
+            mario.x = box.x + box.w;  
+        }  
+    }  
+}  
+  
+function draw() {  
+    ctx.clearRect(0, 0, canvas.width, canvas.height);  
+  
+    // Texto "EST 86" en el cielo  
+    ctx.fillStyle = "#000";  
+    ctx.font = "900 32px 'Courier New', monospace";  
+    ctx.fillText("EST 86", 32, 72); // Sombra del texto  
+    ctx.fillStyle = "#ffffff";  
+    ctx.fillText("EST 86", 30, 70); // Texto principal  
+  
+    // Nubes  
+    ctx.fillStyle = "#fff";  
+    ctx.beginPath();  
+    ctx.arc(220, 70, 20, 0, Math.PI * 2); ctx.arc(240, 60, 25, 0, Math.PI * 2); ctx.arc(260, 70, 20, 0, Math.PI * 2);  
+    ctx.arc(450, 80, 20, 0, Math.PI * 2); ctx.arc(470, 70, 25, 0, Math.PI * 2); ctx.arc(490, 80, 20, 0, Math.PI * 2);  
+    ctx.arc(750, 60, 20, 0, Math.PI * 2); ctx.arc(770, 50, 25, 0, Math.PI * 2); ctx.arc(790, 60, 20, 0, Math.PI * 2);  
+    ctx.fill();  
+  
+    // Dibujar Piso por segmentos  
+    ctx.fillStyle = "#e65c00";  
+    groundSegments.forEach(seg => {  
+        ctx.fillRect(seg.x1, groundY, seg.x2 - seg.x1, canvas.height - groundY);  
+        ctx.fillStyle = "#00a000";  
+        ctx.fillRect(seg.x1, groundY, seg.x2 - seg.x1, 10);  
+        ctx.fillStyle = "#e65c00";  
+    });  
+  
+    // Dibujar Tuberías  
+    pipes.forEach(p => {  
+        ctx.fillStyle = "#00a000";  
+        ctx.fillRect(p.x, p.y, p.w, p.h);  
+        ctx.fillRect(p.x - 3, p.y, p.w + 6, 15);  
+        ctx.strokeStyle = "#000";  
+        ctx.lineWidth = 2;  
+        ctx.strokeRect(p.x, p.y, p.w, p.h);  
+        ctx.strokeRect(p.x - 3, p.y, p.w + 6, 15);  
+    });  
+  
+    // Dibujar Bloques Ladrillo  
+    brickBlocks.forEach(b => {  
+        ctx.fillStyle = "#b34700";  
+        ctx.fillRect(b.x, b.y, b.w, b.h);  
+        ctx.strokeStyle = "#000";  
+        ctx.lineWidth = 2;  
+        ctx.strokeRect(b.x, b.y, b.w, b.h);  
+        ctx.beginPath();  
+        ctx.moveTo(b.x, b.y + b.h/2); ctx.lineTo(b.x + b.w, b.y + b.h/2);  
+        ctx.stroke();  
+    });  
+  
+    // Dibujar Bloques ?  
+    questionBlocks.forEach(b => {  
+        if (b.hit) {  
+            ctx.fillStyle = "#774411";  
+            ctx.fillRect(b.x, b.y, b.w, b.h);  
+            ctx.strokeStyle = "#000";  
+            ctx.strokeRect(b.x, b.y, b.w, b.h);  
+        } else {  
+            ctx.fillStyle = "#ffcc00";  
+            ctx.fillRect(b.x, b.y, b.w, b.h);  
+            ctx.strokeStyle = "#000";  
+            ctx.strokeRect(b.x, b.y, b.w, b.h);  
+            ctx.fillStyle = "#000";  
+            ctx.font = "bold 18px Courier New";  
+            ctx.fillText("?", b.x + 9, b.y + 22);  
+        }  
+    });  
+  
+    // Dibujar Mario  
+    ctx.fillStyle = "#ff0000"; // Gorra  
+    ctx.fillRect(mario.x + 3, mario.y, 16, 6);  
+    ctx.fillStyle = "#ffcc99"; // Cara  
+    ctx.fillRect(mario.x + 3, mario.y + 6, 16, 8);  
+    ctx.fillStyle = "#ff0000"; // Camisa  
+    ctx.fillRect(mario.x + 1, mario.y + 14, 20, 8);  
+    ctx.fillStyle = "#0000ff"; // Overol  
+    ctx.fillRect(mario.x + 3, mario.y + 22, 16, 8);  
+    ctx.fillStyle = "#000"; // Ojo  
+    ctx.fillRect(mario.x + 13, mario.y + 8, 3, 3);  
+}  
+  
+function gameLoop() {  
+    update();  
+    draw();  
+    requestAnimationFrame(gameLoop);  
+}  
+  
+function openQuestion(block) {  
+    isPaused = true;  
+    activeQuestionBlock = block;  
+    const qData = questions[block.qIndex];  
+      
+    document.getElementById('q-title').innerText = qData.q;  
+    const optsContainer = document.getElementById('q-options');  
+    optsContainer.innerHTML = "";  
+  
+    qData.opts.forEach((opt, idx) => {  
+        const btn = document.createElement('button');  
+        btn.className = "option-btn";  
+        btn.innerText = opt;  
+        btn.onclick = () => handleAnswer(idx);  
+        optsContainer.appendChild(btn);  
+    });  
+  
+    document.getElementById('quiz-modal').style.display = "flex";  
+}  
+  
+function handleAnswer(selectedIndex) {  
+    const qData = questions[activeQuestionBlock.qIndex];  
+      
+    if (selectedIndex === qData.correct) {  
+        soundSuccess();  
+        score++;  
+        activeQuestionBlock.hit = true;  
+    } else {  
+        soundError();  
+        lives--;  
+        if (score > 0) score--;  
+    }  
+  
+    updateHUD();  
+    document.getElementById('quiz-modal').style.display = "none";  
+    isPaused = false;  
+  
+    if (lives <= 0) {  
+        endGame(false);  
+    } else if (score >= 10) {  
+        endGame(true);  
+    }  
+}  
+  
+function updateHUD() {  
+    document.getElementById('score').innerText = score;  
+    document.getElementById('lives').innerText = "❤️".repeat(Math.max(0, lives));  
+}  
+  
+function endGame(won) {  
+    isPaused = true;  
+    const endScreen = document.getElementById('game-over-screen');  
+    const title = document.getElementById('end-title');  
+    const msg = document.getElementById('end-msg');  
+  
+    if (won) {  
+        soundSuccess();  
+        title.innerText = "¡VICTORIA TOTAL! 🏆";  
+        msg.innerText = "¡Has reunido 10 puntos superando todos los obstáculos!";  
+    } else {  
+        soundError();  
+        title.innerText = "¡GAME OVER! 💥";  
+        msg.innerText = "Te quedaste sin vidas. ¡Repasa el Programa Analítico e inténtalo de nuevo!";  
+    }  
+  
+    endScreen.style.display = "flex";  
+}  
+  
+function resetGame() {  
+    score = 0;  
+    lives = 3;  
+    mario.x = 20;  
+    mario.y = 300;  
+    mario.vx = 0;  
+    mario.vy = 0;  
+    questionBlocks.forEach(b => b.hit = false);  
+    updateHUD();  
+    document.getElementById('game-over-screen').style.display = "none";  
+    isPaused = false;  
+}  
+  
+updateHUD();  
+gameLoop();  
+</script>  
+</body>  
+</html>  
