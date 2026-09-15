@@ -2,49 +2,51 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>La Estructura de las Revoluciones Científicas</title>
     <style>
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { margin: 0; padding: 15px; background: #020205; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; color: #fff; overflow: hidden; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: manipulation; }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #010103; color: #fff; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
         
         #game-title-banner {
             font-family: 'Courier New', monospace;
-            font-size: 20px;
+            font-size: 13px;
             font-weight: bold;
             color: #ffe81f;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-            text-shadow: 0 0 10px rgba(255, 232, 31, 0.8), 0 0 20px rgba(255, 150, 0, 0.5);
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px rgba(255, 232, 31, 0.8);
             text-align: center;
-            border-bottom: 2px solid #ffe81f;
-            padding-bottom: 5px;
-            width: 900px;
+            padding: 8px 5px;
+            width: 100%;
+            background: #080c14;
+            border-bottom: 1px solid #ffe81f;
+            z-index: 10;
         }
 
-        #game-wrapper { position: relative; width: 900px; height: 500px; border: 2px solid #3a4b6e; background: #000; overflow: hidden; box-shadow: 0 0 35px rgba(0, 0, 0, 0.9), 0 0 15px rgba(79, 195, 247, 0.2); border-radius: 8px; }
-        #canvas { background: #010103; width: 900px; height: 500px; display: block; }
+        #game-wrapper { position: relative; width: 100vw; height: calc(100vh - 135px); background: #000; overflow: hidden; }
+        #canvas { width: 100%; height: 100%; display: block; }
         
-        #hud { position: absolute; top: 12px; left: 20px; right: 20px; display: flex; justify-content: space-between; font-size: 15px; font-weight: bold; color: #ffe81f; text-shadow: 0 0 8px #000; z-index: 5; font-family: 'Courier New', monospace; }
+        #hud { position: absolute; top: 10px; left: 12px; right: 12px; display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: #ffe81f; text-shadow: 0 0 6px #000; z-index: 5; font-family: 'Courier New', monospace; }
         
-        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 4, 10, 0.93); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; text-align: center; padding: 25px; }
-        .overlay-screen h1 { font-size: 28px; color: #ffe81f; margin-bottom: 15px; text-shadow: 0 0 12px rgba(255, 232, 31, 0.6); font-family: 'Courier New', monospace; }
-        .overlay-screen p { font-size: 14px; margin-bottom: 20px; color: #d0d7de; max-width: 650px; line-height: 1.6; }
-        .main-btn { padding: 12px 32px; font-size: 16px; font-weight: bold; background: linear-gradient(180deg, #ffe81f, #d4a300); color: #000; border: none; border-radius: 6px; cursor: pointer; box-shadow: 0 0 15px rgba(255, 232, 31, 0.4); font-family: inherit; transition: 0.2s; }
-        .main-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
+        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(3, 4, 10, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; text-align: center; padding: 20px; overflow-y: auto; }
+        .overlay-screen h1 { font-size: 22px; color: #ffe81f; margin-bottom: 12px; text-shadow: 0 0 10px rgba(255, 232, 31, 0.6); font-family: 'Courier New', monospace; }
+        .overlay-screen p { font-size: 13px; margin-bottom: 18px; color: #d0d7de; max-width: 90%; line-height: 1.5; }
+        .main-btn { padding: 12px 28px; font-size: 16px; font-weight: bold; background: linear-gradient(180deg, #ffe81f, #d4a300); color: #000; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 0 15px rgba(255, 232, 31, 0.4); font-family: inherit; }
 
-        #quiz-modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.94); justify-content: center; align-items: center; z-index: 30; padding: 20px; }
-        .modal-content { background: #09111e; border: 2px solid #ffe81f; border-radius: 10px; padding: 22px; max-width: 720px; width: 100%; color: #fff; text-align: left; box-shadow: 0 0 30px rgba(255, 232, 31, 0.2); }
-        .modal-content h2 { margin-top: 0; color: #4fc3f7; font-size: 17px; border-bottom: 1px solid #1e3a5f; padding-bottom: 6px; font-family: 'Courier New', monospace; }
-        .modal-content h3 { color: #ffe81f; font-size: 15px; line-height: 1.4; margin: 15px 0; }
-        .option-btn { display: block; width: 100%; margin: 8px 0; padding: 10px 14px; background: #132238; color: #e6edf3; border: 1px solid #21395c; border-radius: 6px; cursor: pointer; text-align: left; font-size: 13px; font-family: inherit; line-height: 1.3; transition: 0.2s; }
-        .option-btn:hover { background: #ffe81f; color: #000; font-weight: bold; border-color: #ffe81f; }
+        .end-character-img { width: 120px; height: auto; border-radius: 10px; margin: 10px 0; border: 2px solid #ffe81f; box-shadow: 0 0 15px rgba(255, 232, 31, 0.5); }
 
-        #touch-controls { margin-top: 12px; display: flex; gap: 15px; }
-        .touch-btn { width: 60px; height: 45px; background: #09111e; color: #ffe81f; border: 2px solid #ffe81f; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; user-select: none; }
-        .touch-btn:active { background: #1f3556; }
-        .controls-hint { margin-top: 8px; color: #6e7681; font-size: 12px; font-family: 'Courier New', monospace; }
+        #quiz-modal { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); justify-content: center; align-items: center; z-index: 30; padding: 15px; }
+        .modal-content { background: #09111e; border: 2px solid #ffe81f; border-radius: 10px; padding: 16px; width: 100%; max-height: 90vh; overflow-y: auto; color: #fff; text-align: left; box-shadow: 0 0 20px rgba(255, 232, 31, 0.2); }
+        .modal-content h2 { margin-top: 0; color: #4fc3f7; font-size: 14px; border-bottom: 1px solid #1e3a5f; padding-bottom: 4px; font-family: 'Courier New', monospace; }
+        .modal-content h3 { color: #ffe81f; font-size: 13px; line-height: 1.3; margin: 10px 0; }
+        .option-btn { display: block; width: 100%; margin: 6px 0; padding: 10px; background: #132238; color: #e6edf3; border: 1px solid #21395c; border-radius: 6px; cursor: pointer; text-align: left; font-size: 12px; font-family: inherit; line-height: 1.2; }
+        .option-btn:active { background: #ffe81f; color: #000; font-weight: bold; }
+
+        #touch-controls { width: 100vw; height: 90px; background: #050a12; display: flex; justify-content: space-around; align-items: center; padding: 5px 15px; border-top: 1px solid #1e3a5f; }
+        .touch-btn { width: 75px; height: 65px; background: #0d1b2a; color: #ffe81f; border: 2px solid #ffe81f; border-radius: 12px; font-size: 22px; font-weight: bold; display: flex; justify-content: center; align-items: center; user-select: none; }
+        .touch-btn:active { background: #ffe81f; color: #000; }
+        #btn-thrust { width: 130px; background: #ffe81f; color: #000; font-size: 15px; }
     </style>
 </head>
 <body>
@@ -57,14 +59,14 @@
         <div>VIDAS: <span id="lives">❤️❤️❤️</span></div>
     </div>
 
-    <canvas id="canvas" width="900" height="500"></canvas>
+    <canvas id="canvas"></canvas>
 
     <div id="start-screen" class="overlay-screen">
-        <h1>MISIÓN ESPACIAL INTERACTIVA</h1>
-        <p>Viaja por el Sistema Solar respondiendo a las preguntas de la exposición.<br><br>
-        🚀 <b>Piloto:</b> Mantén presionado ▲ (o W) para usar propulsores. Desciende suavemente al soltarlo.<br>
-        ☄️ <b>Peligro:</b> Maniobra de lado a lado (◄ ►) para esquivar asteroides.<br>
-        🪐 <b>Objetivo:</b> Alcanza la órbita de cada planeta para responder las preguntas y avanzar.</p>
+        <h1>MISIÓN ESPACIAL</h1>
+        <p>Viaja por el Sistema Solar respondiendo las preguntas de la exposición.<br><br>
+        🚀 <b>Móvil:</b> Usa el botón central <b>IMPULSO</b> para subir. Suéltalo para descender suavemente.<br>
+        ◄ ► Usa las flechas para esquivar asteroides.<br>
+        🪐 Alcanza cada planeta para desbloquear la pregunta.</p>
         <button class="main-btn" onclick="startGame()">DESPEGAR</button>
     </div>
 
@@ -78,24 +80,29 @@
 
     <div id="game-over-screen" class="overlay-screen" style="display: none;">
         <h1 id="end-title" style="color: #ff5252;">¡MISIÓN FALLIDA!</h1>
-        <p id="end-msg">Tu nave sufrio daños críticos en el espacio profundo.</p>
-        <button class="main-btn" onclick="resetGame()">REINTENTAR MISIÓN</button>
+        <div id="end-avatar-box"></div>
+        <p id="end-msg">Tu nave sufrió daños en el espacio profundo.</p>
+        <button class="main-btn" onclick="resetGame()">REINTENTAR</button>
     </div>
 </div>
 
 <div id="touch-controls">
-    <button class="touch-btn" id="btn-left">◄</button>
-    <button class="touch-btn" id="btn-thrust" style="width: 110px; background: #ffe81f; color: #000;">IMPULSO ▲</button>
-    <button class="touch-btn" id="btn-right">►</button>
-</div>
-
-<div class="controls-hint">
-    🎮 Impulso: ▲ / W | Moverse: ◄ ► / A D
+    <div class="touch-btn" id="btn-left">◄</div>
+    <div class="touch-btn" id="btn-thrust">IMPULSO ▲</div>
+    <div class="touch-btn" id="btn-right">►</div>
 </div>
 
 <script>
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+    const wrapper = document.getElementById('game-wrapper');
+    canvas.width = wrapper.clientWidth;
+    canvas.height = wrapper.clientHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
 let audioCtx = null;
 function initAudio() {
@@ -109,7 +116,7 @@ function playNote(freq, type, duration) {
         const gain = audioCtx.createGain();
         osc.type = type;
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
@@ -123,9 +130,6 @@ function startStarWarsTheme() {
     const notes = [
         {f: 293, d: 0.4}, {f: 293, d: 0.4}, {f: 293, d: 0.4},
         {f: 220, d: 0.3}, {f: 349, d: 0.15}, {f: 293, d: 0.4},
-        {f: 220, d: 0.3}, {f: 349, d: 0.15}, {f: 293, d: 0.6},
-        {f: 440, d: 0.4}, {f: 440, d: 0.4}, {f: 440, d: 0.4},
-        {f: 466, d: 0.3}, {f: 349, d: 0.15}, {f: 277, d: 0.4},
         {f: 220, d: 0.3}, {f: 349, d: 0.15}, {f: 293, d: 0.6}
     ];
     let step = 0;
@@ -136,18 +140,16 @@ function startStarWarsTheme() {
             playNote(n.f, 'sawtooth', n.d);
             step = (step + 1) % notes.length;
         }
-    }, 320);
+    }, 350);
 }
 
 function soundExplosion() {
     playNote(90, 'sawtooth', 0.3);
-    setTimeout(() => playNote(50, 'sawtooth', 0.4), 100);
 }
 
 function soundSuccess() {
     playNote(440, 'square', 0.1);
-    setTimeout(() => playNote(554, 'square', 0.1), 100);
-    setTimeout(() => playNote(659, 'square', 0.2), 200);
+    setTimeout(() => playNote(659, 'square', 0.2), 150);
 }
 
 const stations = [
@@ -156,82 +158,82 @@ const stations = [
         topic: "La Comunidad Científica",
         q: "Según la lectura, ¿cómo define Thomas Kuhn a una comunidad científica?",
         opts: [
-            "A) Un grupo de personas de cualquier profesión que leen sobre ciencia en su tiempo libre.",
+            "A) Un grupo de personas de cualquier profesión que leen sobre ciencia.",
             "B) Un conjunto de profesionales de una especialidad que comparten procesos de educación semejantes, lecciones comunes y metas compartidas.",
-            "C) Una institución gubernamental encargada de dictar leyes universales e inmutables.",
-            "D) Un grupo de científicos que trabajan de forma completamente aislada sin comunicarse entre sí."
+            "C) Una institución gubernamental encargada de dictar leyes universales.",
+            "D) Un grupo de científicos que trabajan completamente aislados."
         ],
         correct: 1
     },
     {
         name: "Estación 2: Mercurio ☿️",
         topic: "Las Prácticas Científicas",
-        q: "De acuerdo con Javier Echeverría y León Olivé, las prácticas científicas no se reducen solo a los resultados de las teorías, sino que consisten en:",
+        q: "De acuerdo con Javier Echeverría y León Olivé, las prácticas científicas consisten en:",
         opts: [
             "A) Acciones concretas como observar, medir, experimentar, publicar, discutir, enseñar y evaluar.",
             "B) La acumulación de dinero a través de patentes comerciales privadas.",
-            "C) El seguimiento de reglas matemáticas rígidas que jamás cambian a lo largo de la historia.",
-            "D) La memorización pasiva de manuales escolares sin realizar ningún tipo de trabajo de campo."
+            "C) Reglas matemáticas rígidas que jamás cambian.",
+            "D) Memorización pasiva de manuales sin trabajo de campo."
         ],
         correct: 0
     },
     {
         name: "Estación 3: Venus ♀️",
         topic: "El Paradigma",
-        q: "En el epílogo de 1969, Kuhn aclaró que el término paradigma se utiliza en dos sentidos principales. ¿Cuáles son?",
+        q: "En el epílogo de 1969, Kuhn aclaró que el término paradigma se utiliza en dos sentidos principales:",
         opts: [
-            "A) El sentido biológico y el sentido astronómico.",
-            "B) El sentido sociológico (creencias y técnicas compartidas) y las soluciones concretas a rompecabezas (modelos o ejemplos).",
-            "C) El sentido económico y el sentido político.",
-            "D) El sentido individualista y el sentido subjetivo."
+            "A) Sentido biológico y sentido astronómico.",
+            "B) Sentido sociológico (creencias compartidas) y soluciones concretas a rompecabezas (ejemplos).",
+            "C) Sentido económico y político.",
+            "D) Sentido individualista y subjetivo."
         ],
         correct: 1
     },
     {
         name: "Estación 4: La Tierra 🌍",
         topic: "El Constructivismo",
-        q: "El constructivismo de corte kantiano planteado en la lectura sostiene que los objetos y los hechos del mundo real:",
+        q: "El constructivismo kantiano sostiene que los objetos del mundo real:",
         opts: [
-            "A) Son inventos libres de la imaginación que no tienen relación con la realidad.",
-            "B) Se constituyen de manera conjunta por una realidad independiente y por el esquema conceptual o paradigma utilizado.",
-            "C) Existen de forma totalmente independiente del lenguaje y de los observadores humanos.",
-            "D) Son idénticos y percibidos de la misma manera por todas las culturas del planeta."
+            "A) Son inventos libres sin relación con la realidad.",
+            "B) Se constituyen de manera conjunta por una realidad independiente y por el esquema conceptual utilizado.",
+            "C) Existen de forma totalmente independiente del lenguaje y observadores.",
+            "D) Son percibidos igual por todas las culturas."
         ],
         correct: 1
     },
     {
         name: "Estación 5: Marte ♂️",
         topic: "Pluralismo vs. Relativismo",
-        q: "¿En qué se diferencia el pluralismo del relativismo extremo según el texto?",
+        q: "¿En qué se diferencia el pluralismo del relativismo extremo?",
         opts: [
-            "A) El pluralismo afirma que 'todo vale' y que cualquier opinión es igual de correcta.",
-            "B) El pluralismo reconoce que los estándares de validez sí se pueden corregir porque la realidad impone restricciones.",
-            "C) El relativismo acepta la existencia de reglas absolutas y el pluralismo las defiende.",
-            "D) No existe ninguna diferencia; ambos términos significan exactamente lo mismo."
+            "A) El pluralismo afirma que 'todo vale' e igual de correcto.",
+            "B) El pluralismo reconoce que los estándares de validez se pueden corregir porque la realidad impone restricciones.",
+            "C) El relativismo acepta reglas absolutas.",
+            "D) No existe ninguna diferencia entre ambos."
         ],
         correct: 1
     },
     {
         name: "Estación 6: Júpiter ♃",
         topic: "La Inconmensurabilidad",
-        q: "¿Qué significa que dos paradigmas o marcos conceptuales sean inconmensurables a nivel epistemológico?",
+        q: "¿Qué significa que dos paradigmas sean inconmensurables a nivel epistemológico?",
         opts: [
-            "A) Que se pueden medir y comparar fácilmente utilizando exactamente la misma regla lógica.",
+            "A) Que se pueden medir fácilmente con la misma regla.",
             "B) Que no existe un patrón o criterio común neutral para decidir cuál de ellos es el correcto.",
-            "C) Que los científicos de ambos grupos hablan exactamente el mismo lenguaje teórico.",
-            "D) Que es imposible que miembros de distintas corrientes logren comunicarse o llegar a acuerdos racionales."
+            "C) Que los científicos hablan el mismo lenguaje teórico.",
+            "D) Que es imposible comunicarse entre distintos grupos."
         ],
         correct: 1
     },
     {
         name: "Estación 7: Saturno ♄",
         topic: "La Tecnociencia",
-        q: "¿Qué caracteriza a los sistemas tecnocientíficos modernos en comparación con la ciencia tradicional?",
+        q: "¿Qué caracteriza a los sistemas tecnocientíficos modernos?",
         opts: [
-            "A) Son desarrollados únicamente por científicos solitarios sin financiamiento externo.",
-            "B) Involucran equipos multidisciplinarios, masivo financiamiento e intereses económicos, políticos y militares para intervenir el entorno.",
-            "C) Se limitan exclusivamente a observar la naturaleza sin alterar el ambiente ni la sociedad.",
-            "D) Se rigen por un único paradigma unificado de valores sin generar controversias ni conflictos de interés."
+            "A) Desarrollados únicamente por científicos solitarios.",
+            "B) Involucran equipos multidisciplinarios, masivo financiamiento e intereses económicos, políticos y militares.",
+            "C) Se limitan solo a observar la naturaleza.",
+            "D) Se rigen por un único paradigma unificado sin controversias."
         ],
         correct: 1
     }
@@ -244,48 +246,45 @@ let gameStarted = false;
 let gameTime = 0;
 
 const ship = {
-    x: 435, y: 70, width: 32, height: 44,
-    vx: 0, vy: 0, speed: 5.2, thrust: -0.22, gravity: 0.08
+    x: 150, y: 100, width: 28, height: 38,
+    vx: 0, vy: 0, speed: 4.8, thrust: -0.22, gravity: 0.085
 };
 
 const particles = [];
 
 const levelTargets = [
-    { name: "El Sol ☀️", color: "#ffaa00", size: 100, ring: false },
-    { name: "Mercurio ☿️", color: "#8a8a8a", size: 28, ring: false },
-    { name: "Venus ♀️", color: "#e3a857", size: 34, ring: false },
-    { name: "La Tierra 🌍", color: "#2b82c5", size: 38, ring: false },
-    { name: "Marte ♂️", color: "#c84b31", size: 32, ring: false },
-    { name: "Júpiter ♃", color: "#b07d5b", size: 58, ring: false },
-    { name: "Saturno ♄", color: "#e0a96d", size: 46, ring: true }
+    { name: "El Sol ☀️", color: "#ffaa00", size: 80, ring: false },
+    { name: "Mercurio ☿️", color: "#8a8a8a", size: 24, ring: false },
+    { name: "Venus ♀️", color: "#e3a857", size: 28, ring: false },
+    { name: "La Tierra 🌍", color: "#2b82c5", size: 30, ring: false },
+    { name: "Marte ♂️", color: "#c84b31", size: 26, ring: false },
+    { name: "Júpiter ♃", color: "#b07d5b", size: 45, ring: false },
+    { name: "Saturno ♄", color: "#e0a96d", size: 38, ring: true }
 ];
 
-let targetPlanet = { x: 450, y: 80, dir: 1, speed: 2 };
+let targetPlanet = { x: 150, y: 70, dir: 1, speed: 1.8 };
 
 const asteroids = [];
 function initAsteroids() {
     asteroids.length = 0;
-    for(let i = 0; i < 7; i++) {
+    for(let i = 0; i < 5; i++) {
         asteroids.push({
-            x: Math.random() * (canvas.width - 80) + 40,
-            y: -Math.random() * 400 - 50,
-            radius: Math.random() * 12 + 10,
-            vy: Math.random() * 1.8 + 1.2,
-            vx: (Math.random() - 0.5) * 1.5,
-            rot: Math.random() * Math.PI,
-            vRot: (Math.random() - 0.5) * 0.05
+            x: Math.random() * (canvas.width - 60) + 30,
+            y: -Math.random() * 300 - 40,
+            radius: Math.random() * 10 + 9,
+            vy: Math.random() * 1.6 + 1.2,
+            vx: (Math.random() - 0.5) * 1.2
         });
     }
 }
 
 const stars = [];
-for(let i = 0; i < 120; i++) {
+for(let i = 0; i < 70; i++) {
     stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
+        x: Math.random() * 400,
+        y: Math.random() * 700,
         size: Math.random() * 2 + 0.5,
-        alpha: Math.random(),
-        speed: Math.random() * 0.02 + 0.005
+        alpha: Math.random()
     });
 }
 
@@ -293,16 +292,18 @@ const keys = {};
 window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
 
-function setupTouchEvents(btnId, code) {
-    const btn = document.getElementById(btnId);
-    btn.addEventListener('mousedown', () => keys[code] = true);
-    btn.addEventListener('mouseup', () => keys[code] = false);
-    btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[code] = true; });
-    btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[code] = false; });
+function bindTouch(id, code) {
+    const el = document.getElementById(id);
+    const start = (e) => { e.preventDefault(); keys[code] = true; };
+    const end = (e) => { e.preventDefault(); keys[code] = false; };
+    el.addEventListener('touchstart', start);
+    el.addEventListener('touchend', end);
+    el.addEventListener('mousedown', start);
+    el.addEventListener('mouseup', end);
 }
-setupTouchEvents('btn-left', 'ArrowLeft');
-setupTouchEvents('btn-right', 'ArrowRight');
-setupTouchEvents('btn-thrust', 'ArrowUp');
+bindTouch('btn-left', 'ArrowLeft');
+bindTouch('btn-right', 'ArrowRight');
+bindTouch('btn-thrust', 'ArrowUp');
 
 function startGame() {
     initAudio();
@@ -310,6 +311,7 @@ function startGame() {
     isPaused = false;
     gameStarted = true;
     startStarWarsTheme();
+    resetShipPosition();
     triggerStation(0);
 }
 
@@ -319,17 +321,16 @@ function update() {
 
     if (keys['ArrowRight'] || keys['KeyD']) ship.vx = ship.speed;
     else if (keys['ArrowLeft'] || keys['KeyA']) ship.vx = -ship.speed;
-    else ship.vx *= 0.82;
+    else ship.vx *= 0.8;
 
     if (keys['ArrowUp'] || keys['KeyW']) {
         ship.vy += ship.thrust;
-        // Crear partículas de fuego del propulsor
         for(let i=0; i<2; i++) {
             particles.push({
-                x: ship.x + ship.width/2 + (Math.random()-0.5)*8,
-                y: ship.y + ship.height - 5,
-                vx: (Math.random()-0.5)*1.5,
-                vy: Math.random()*3 + 2,
+                x: ship.x + ship.width/2,
+                y: ship.y + ship.height,
+                vx: (Math.random()-0.5)*1.2,
+                vy: Math.random()*2 + 1.5,
                 life: 1,
                 color: Math.random() > 0.4 ? '#ff5722' : '#ffe81f'
             });
@@ -338,56 +339,49 @@ function update() {
         ship.vy += ship.gravity;
     }
 
-    if (ship.vy > 2.5) ship.vy = 2.5;
-    if (ship.vy < -4) ship.vy = -4;
+    if (ship.vy > 2.2) ship.vy = 2.2;
+    if (ship.vy < -3.5) ship.vy = -3.5;
 
     ship.x += ship.vx;
     ship.y += ship.vy;
 
-    if (ship.x < 10) { ship.x = 10; ship.vx = 0; }
-    if (ship.x + ship.width > canvas.width - 10) { ship.x = canvas.width - ship.width - 10; ship.vx = 0; }
+    if (ship.x < 5) { ship.x = 5; ship.vx = 0; }
+    if (ship.x + ship.width > canvas.width - 5) { ship.x = canvas.width - ship.width - 5; ship.vx = 0; }
 
-    if (ship.y > canvas.height - 30) {
+    if (ship.y > canvas.height - 25) {
         soundExplosion();
-        takeDamage("¡Tu nave descendió demasiado hacia la radiación solar!");
+        takeDamage("¡Caíste en la gravedad solar!");
         resetShipPosition();
     }
 
     if (currentLevel > 0) {
         targetPlanet.x += targetPlanet.dir * targetPlanet.speed;
-        if (targetPlanet.x < 120 || targetPlanet.x > canvas.width - 120) {
+        if (targetPlanet.x < 50 || targetPlanet.x > canvas.width - 50) {
             targetPlanet.dir *= -1;
         }
     }
 
-    // Actualizar partículas
     for(let i = particles.length-1; i>=0; i--) {
         let p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life -= 0.05;
+        p.x += p.vx; p.y += p.vy; p.life -= 0.06;
         if(p.life <= 0) particles.splice(i, 1);
     }
 
-    // Mover y rotar Asteroides
     asteroids.forEach(ast => {
-        ast.y += ast.vy;
-        ast.x += ast.vx;
-        ast.rot += ast.vRot;
-
-        if (ast.y > canvas.height + 30) {
-            ast.y = -40;
-            ast.x = Math.random() * (canvas.width - 80) + 40;
+        ast.y += ast.vy; ast.x += ast.vx;
+        if (ast.y > canvas.height + 20) {
+            ast.y = -30;
+            ast.x = Math.random() * (canvas.width - 40) + 20;
         }
 
         const shipCX = ship.x + ship.width / 2;
         const shipCY = ship.y + ship.height / 2;
         const dist = Math.hypot(shipCX - ast.x, shipCY - ast.y);
         
-        if (dist < ast.radius + 14) {
+        if (dist < ast.radius + 12) {
             soundExplosion();
-            takeDamage("¡Impacto severo con un asteroide!");
-            ast.y = -50;
+            takeDamage("¡Choque con asteroide!");
+            ast.y = -40;
             ship.vy = 1;
         }
     });
@@ -398,7 +392,7 @@ function update() {
         const currentTargetData = levelTargets[currentLevel];
         const distToPlanet = Math.hypot(shipCX - targetPlanet.x, shipCY - targetPlanet.y);
 
-        if (distToPlanet < currentTargetData.size + 15) {
+        if (distToPlanet < currentTargetData.size + 12) {
             triggerStation(currentLevel);
         }
     }
@@ -408,7 +402,7 @@ function triggerStation(index) {
     isPaused = true;
     const st = stations[index];
     document.getElementById('target-planet').innerText = levelTargets[index].name;
-    document.getElementById('q-station').innerText = `${st.name} — ${st.topic}`;
+    document.getElementById('q-station').innerText = `${st.name}`;
     document.getElementById('q-title').innerText = st.q;
     
     const optsBox = document.getElementById('q-options');
@@ -439,13 +433,13 @@ function handleAnswer(selected) {
         } else {
             resetShipPosition();
             initAsteroids();
-            targetPlanet.x = Math.random() * (canvas.width - 320) + 160;
-            targetPlanet.y = 85;
-            targetPlanet.speed = 1.4 + currentLevel * 0.35;
+            targetPlanet.x = canvas.width / 2;
+            targetPlanet.y = 70;
+            targetPlanet.speed = 1.3 + currentLevel * 0.3;
         }
     } else {
         soundExplosion();
-        takeDamage("Respuesta incorrecta. Perdiste 1 vida.");
+        takeDamage("Respuesta incorrecta. -1 vida.");
         resetShipPosition();
     }
 
@@ -453,10 +447,9 @@ function handleAnswer(selected) {
 }
 
 function resetShipPosition() {
-    ship.x = 435;
-    ship.y = 370;
-    ship.vx = 0;
-    ship.vy = 0;
+    ship.x = canvas.width / 2 - ship.width / 2;
+    ship.y = canvas.height - 120;
+    ship.vx = 0; ship.vy = 0;
 }
 
 function takeDamage(msg) {
@@ -467,162 +460,70 @@ function takeDamage(msg) {
     }
 }
 
-function drawRealisticSun(x, y, radius) {
-    // Corona solar exterior radiante
-    const auraGlow = ctx.createRadialGradient(x, y, radius * 0.2, x, y, radius * 2.5);
-    auraGlow.addColorStop(0, 'rgba(255, 235, 120, 0.9)');
-    auraGlow.addColorStop(0.3, 'rgba(255, 140, 0, 0.6)');
-    auraGlow.addColorStop(0.7, 'rgba(255, 50, 0, 0.2)');
-    auraGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = auraGlow;
-    ctx.beginPath();
-    ctx.arc(x, y, radius * 2.5, 0, Math.PI * 2);
-    ctx.fill();
+    stars.forEach(s => {
+        ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+        ctx.fillRect((s.x / 400) * canvas.width, (s.y / 700) * canvas.height, s.size, s.size);
+    });
 
-    // Núcleo brillante
-    const sunBody = ctx.createRadialGradient(x - radius*0.2, y - radius*0.2, 0, x, y, radius);
-    sunBody.addColorStop(0, '#ffffff');
-    sunBody.addColorStop(0.2, '#fff473');
-    sunBody.addColorStop(0.6, '#ff8800');
-    sunBody.addColorStop(1, '#d82c00');
-
-    ctx.fillStyle = sunBody;
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fill();
-}
-
-function drawRealisticPlanet(x, y, pData) {
-    // Sombra 3D y brillo de atmósfera
-    const planetGlow = ctx.createRadialGradient(x, y, pData.size * 0.8, x, y, pData.size * 1.3);
-    planetGlow.addColorStop(0, pData.color);
-    planetGlow.addColorStop(1, 'rgba(0,0,0,0)');
-    
-    ctx.fillStyle = planetGlow;
-    ctx.beginPath();
-    ctx.arc(x, y, pData.size * 1.3, 0, Math.PI * 2);
-    ctx.fill();
-
-    const grad = ctx.createRadialGradient(x - pData.size*0.3, y - pData.size*0.3, 5, x, y, pData.size);
-    grad.addColorStop(0, '#ffffff');
-    grad.addColorStop(0.3, pData.color);
-    grad.addColorStop(1, '#050a12');
-
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(x, y, pData.size, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (pData.ring) {
-        ctx.strokeStyle = "rgba(224, 169, 109, 0.7)";
-        ctx.lineWidth = 6;
+    if (currentLevel === 0) {
+        const sunGlow = ctx.createRadialGradient(canvas.width/2, canvas.height + 100, 20, canvas.width/2, canvas.height + 100, 220);
+        sunGlow.addColorStop(0, '#ffffff');
+        sunGlow.addColorStop(0.3, '#ffaa00');
+        sunGlow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = sunGlow;
         ctx.beginPath();
-        ctx.ellipse(x, y, pData.size + 24, 12, Math.PI / 6, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.arc(canvas.width/2, canvas.height + 100, 220, 0, Math.PI * 2);
+        ctx.fill();
+    } else {
+        const pData = levelTargets[currentLevel];
+        
+        ctx.fillStyle = pData.color;
+        ctx.beginPath();
+        ctx.arc(targetPlanet.x, targetPlanet.y, pData.size, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (pData.ring) {
+            ctx.strokeStyle = "rgba(224, 169, 109, 0.8)";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.ellipse(targetPlanet.x, targetPlanet.y, pData.size + 15, 8, Math.PI / 6, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        ctx.fillStyle = "#ffe81f";
+        ctx.font = "bold 12px 'Courier New'";
+        ctx.fillText(pData.name, targetPlanet.x - 30, targetPlanet.y + pData.size + 18);
+
+        asteroids.forEach(ast => {
+            ctx.fillStyle = "#6c757d";
+            ctx.beginPath();
+            ctx.arc(ast.x, ast.y, ast.radius, 0, Math.PI * 2);
+            ctx.fill();
+        });
     }
-}
 
-function drawDetailedShip(x, y, w, h) {
-    ctx.save();
-    ctx.translate(x + w/2, y + h/2);
-
-    // Dibujar Partículas de fuego traseras
     particles.forEach(p => {
         ctx.fillStyle = p.color;
         ctx.globalAlpha = p.life;
         ctx.beginPath();
-        ctx.arc(p.x - (x + w/2), p.y - (y + h/2), Math.random()*3 + 2, 0, Math.PI*2);
+        ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
         ctx.fill();
     });
     ctx.globalAlpha = 1.0;
 
-    // Alerones Laterales
-    ctx.fillStyle = "#8a99ad";
-    ctx.beginPath();
-    ctx.moveTo(-16, 8); ctx.lineTo(-22, 18); ctx.lineTo(-10, 15);
-    ctx.moveTo(16, 8); ctx.lineTo(22, 18); ctx.lineTo(10, 15);
-    ctx.fill();
-
-    // Fuselaje Principal
-    const shipGrad = ctx.createLinearGradient(-12, 0, 12, 0);
-    shipGrad.addColorStop(0, '#a6b4c9');
-    shipGrad.addColorStop(0.5, '#ffffff');
-    shipGrad.addColorStop(1, '#56657a');
-
-    ctx.fillStyle = shipGrad;
-    ctx.beginPath();
-    ctx.moveTo(0, -22);
-    ctx.lineTo(14, 14);
-    ctx.lineTo(-14, 14);
-    ctx.closePath();
-    ctx.fill();
-
-    // Cristal de la Cabina (Glass effect)
-    const glassGrad = ctx.createLinearGradient(-4, -8, 4, 2);
-    glassGrad.addColorStop(0, '#80deea');
-    glassGrad.addColorStop(1, '#00838f');
-    ctx.fillStyle = glassGrad;
-    ctx.beginPath();
-    ctx.ellipse(0, -4, 5, 8, 0, 0, Math.PI*2);
-    ctx.fill();
-
-    ctx.restore();
-}
-
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Fondo Espacial con Estrellas Parpadeantes
-    stars.forEach(s => {
-        s.alpha += Math.sin(gameTime * 2 + s.x) * s.speed;
-        let clampedAlpha = Math.max(0.2, Math.min(1, s.alpha));
-        ctx.fillStyle = `rgba(255, 255, 255, ${clampedAlpha})`;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-        ctx.fill();
-    });
-
-    // Dibujar Entorno según el nivel
-    if (currentLevel === 0) {
-        drawRealisticSun(450, 680, 280);
-        ctx.fillStyle = "#ffe81f";
-        ctx.font = "bold 18px 'Courier New'";
-        ctx.fillText("☀️ EL SOL (ESTACIÓN BASE)", 320, 390);
-    } else {
-        const pData = levelTargets[currentLevel];
-        drawRealisticPlanet(targetPlanet.x, targetPlanet.y, pData);
-
-        ctx.fillStyle = "#ffe81f";
-        ctx.font = "bold 13px 'Courier New'";
-        ctx.fillText(pData.name, targetPlanet.x - 35, targetPlanet.y + pData.size + 24);
-
-        // Dibujar Asteroides
-        asteroids.forEach(ast => {
-            ctx.save();
-            ctx.translate(ast.x, ast.y);
-            ctx.rotate(ast.rot);
-
-            ctx.fillStyle = "#5c626e";
-            ctx.strokeStyle = "#2e323b";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(0, 0, ast.radius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-
-            // Cráter en el asteroide
-            ctx.fillStyle = "#3f434d";
-            ctx.beginPath();
-            ctx.arc(-ast.radius*0.3, -ast.radius*0.2, ast.radius*0.3, 0, Math.PI*2);
-            ctx.fill();
-
-            ctx.restore();
-        });
-    }
-
     // Dibujar Nave
-    drawDetailedShip(ship.x, ship.y, ship.width, ship.height);
+    ctx.save();
+    ctx.translate(ship.x + ship.width/2, ship.y + ship.height/2);
+    ctx.fillStyle = "#e0e0e0";
+    ctx.beginPath();
+    ctx.moveTo(0, -18); ctx.lineTo(12, 12); ctx.lineTo(-12, 12);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#00bcd4";
+    ctx.beginPath(); ctx.arc(0, -2, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
 }
 
 function gameLoop() {
@@ -643,15 +544,32 @@ function endGame(won, msg) {
     const endScreen = document.getElementById('game-over-screen');
     const title = document.getElementById('end-title');
     const endMsg = document.getElementById('end-msg');
+    const avatarBox = document.getElementById('end-avatar-box');
 
     if (won) {
         soundSuccess();
         title.style.color = "#ffe81f";
         title.innerText = "¡MISIÓN CUMPLIDA! 🪐🚀";
-        endMsg.innerHTML = "<b>¡Muchas gracias por prestar atención a la exposición!</b><br><br>Has completado satisfactoriamente el recorrido a través de 'La estructura de las revoluciones científicas'.";
+        avatarBox.innerHTML = `<svg class="end-character-img" viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="130" fill="#09111e" rx="10"/>
+            <circle cx="50" cy="40" r="22" fill="#f5d6ba"/>
+            <path d="M28,30 Q50,5 72,30 Q50,15 28,30" fill="#1a1a1a"/>
+            <rect x="33" y="32" width="14" height="10" rx="2" fill="none" stroke="#000" stroke-width="2"/>
+            <rect x="53" y="32" width="14" height="10" rx="2" fill="none" stroke="#000" stroke-width="2"/>
+            <line x1="47" y1="37" x2="53" y2="37" stroke="#000" stroke-width="2"/>
+            <circle cx="40" cy="37" r="2" fill="#000"/>
+            <circle cx="60" cy="37" r="2" fill="#000"/>
+            <path d="M30,65 L70,65 L65,100 L35,100 Z" fill="#111111"/>
+            <rect x="35" y="95" width="12" height="30" fill="#1e3d59"/>
+            <rect x="53" y="95" width="12" height="30" fill="#1e3d59"/>
+            <rect x="33" y="120" width="16" height="8" rx="3" fill="#000"/>
+            <rect x="51" y="120" width="16" height="8" rx="3" fill="#000"/>
+        </svg>`;
+        endMsg.innerHTML = "<b>Te agradezco por acompañarme en este viaje, fue muy emocionante tenerte en mi nave.</b>";
     } else {
         title.style.color = "#ff5252";
         title.innerText = "¡MISIÓN FALLIDA! 💥";
+        avatarBox.innerHTML = "";
         endMsg.innerText = msg || "Te quedaste sin vidas en el trayecto.";
     }
 
